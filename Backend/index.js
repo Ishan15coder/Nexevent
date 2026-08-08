@@ -15,6 +15,9 @@ app.use(cors());
 app.use('/api/auth',authRoutes);
 app.use('/api/events',eventsRoutes);
 app.use('/api/bookings',bookingsRoutes);
+
+// Health check — used by cron job to keep Render from sleeping
+app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 mongoose. connect(process.env.MONGODB_URI)
 
 .then(() => {
