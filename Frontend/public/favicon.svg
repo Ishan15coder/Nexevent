@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#FF4D6D"/>
+    </linearGradient>
+  </defs>
+  <!-- Dark background -->
+  <rect width="32" height="32" rx="7" fill="#0B0B14"/>
+  <!-- Bold "N" letter -->
+  <text x="4" y="25" font-family="Arial Black, sans-serif" font-weight="900" font-size="24" fill="url(#g)">N</text>
+  <!-- Small dot accent -->
+  <circle cx="27" cy="8" r="3.5" fill="#FF4D6D"/>
+</svg>
