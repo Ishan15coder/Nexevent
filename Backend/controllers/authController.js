@@ -12,7 +12,7 @@ exports.registerUser = async (req, res) => {
     const { name, email, password } = req.body;
 
     let userExists = await User.findOne({ email });
-    if (userExists) {
+    if (userExists && userExists.isVerified) {
         return res.status(400).json({ error: 'User already exists' });
     }
 
@@ -20,23 +20,23 @@ exports.registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     try {
-        const user = await User.create({
-            name,
-            email,
-            password: hashedPassword,
-            role: 'user',
-            isVerified: false
-        });
-
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         console.log(`OTP for ${email}: ${otp}`);
 
-        await OTP.create({ email, otp, action: 'account_verification' });
+        await OTP.deleteMany({ email, action: 'account_verification' });
+        await OTP.create({
+            email,
+            name,
+            password: hashedPassword,
+            otp,
+            action: 'account_verification'
+        });
+
         await sendOTPEmail(email, otp, 'account_verification');
 
         res.status(201).json({
-            message: 'User registered successfully.Please check your email for the OTP to verify your account.',
-            email: user.email
+            message: 'OTP sent successfully. Please check your email for the OTP to verify your account.',
+            email
         });
 
     } catch (error) {
@@ -50,7 +50,7 @@ exports.loginUser = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-        return res.status(400).json({ error: 'Invalid credentials,Please Sign Up first' });
+        return res.status(400).json({ error: 'Invalid credentials. Please Sign Up first' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -63,7 +63,13 @@ exports.loginUser = async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         await OTP.deleteMany({ email, action: 'account_verification' });
-        await OTP.create({ email, otp, action: 'account_verification' });
+        await OTP.create({
+            email,
+            name: user.name,
+            password: user.password,
+            otp,
+            action: 'account_verification'
+        });
         await sendOTPEmail(email, otp, 'account_verification');
 
         return res.status(400).json({
@@ -91,19 +97,28 @@ exports.verifyOtp = async (req, res) => {
     });
 
     if (!otpRecord) {
-        return res.status(400).json({ error: 'Invalid OTP' });
+        return res.status(400).json({ error: 'Invalid or expired OTP' });
     }
 
-    const user = await User.findOneAndUpdate(
-        { email },
-        { isVerified: true },
-        { new: true }
-    );
+    let user = await User.findOne({ email });
+
+    if (!user) {
+        user = await User.create({
+            name: otpRecord.name || 'User',
+            email: otpRecord.email,
+            password: otpRecord.password,
+            role: 'user',
+            isVerified: true
+        });
+    } else {
+        user.isVerified = true;
+        await user.save();
+    }
 
     await OTP.deleteMany({ email, action: 'account_verification' });
 
     res.json({
-        message: 'Account verified successfully. You can now log in.',
+        message: 'Account verified and created successfully. You can now log in.',
         id: user._id,
         name: user.name,
         email: user.email,
@@ -115,19 +130,31 @@ exports.verifyOtp = async (req, res) => {
 exports.resendOtp = async (req, res) => {
     const { email } = req.body;
     try {
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        if (user.isVerified) {
+        const existingUser = await User.findOne({ email });
+        if (existingUser && existingUser.isVerified) {
             return res.status(400).json({ error: 'Account is already verified' });
+        }
+
+        const existingOtp = await OTP.findOne({ email, action: 'account_verification' });
+        if (!existingOtp && !existingUser) {
+            return res.status(404).json({ error: 'No pending registration found. Please register first.' });
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         console.log(`Resent OTP for ${email}: ${otp}`);
 
+        const name = existingOtp ? existingOtp.name : (existingUser ? existingUser.name : '');
+        const password = existingOtp ? existingOtp.password : (existingUser ? existingUser.password : '');
+
         await OTP.deleteMany({ email, action: 'account_verification' });
-        await OTP.create({ email, otp, action: 'account_verification' });
+        await OTP.create({
+            email,
+            name,
+            password,
+            otp,
+            action: 'account_verification'
+        });
+
         await sendOTPEmail(email, otp, 'account_verification');
 
         res.json({ message: 'A new OTP has been sent to your email. Please check your inbox and spam folder.' });

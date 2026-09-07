@@ -4,6 +4,12 @@ const otpSchema= new mongoose.Schema({
         type: String,
         required: true
     },
+    name:{
+        type: String
+    },
+    password:{
+        type: String
+    },
     otp:{
         type: String,
         required: true
