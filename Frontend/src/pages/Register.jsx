@@ -205,7 +205,7 @@ const Register = () => {
                             )}
 
                             <button type="submit" disabled={loading} className="btn btn-teal btn-lg" style={{ width: '100%', marginTop: '8px' }}>
-                                {loading ? 'Creating Account...' : <>Register Account <FaArrowRight size={12} /></>}
+                                {loading ? 'Sending OTP Email...' : <>Register Account <FaArrowRight size={12} /></>}
                             </button>
                         </form>
 

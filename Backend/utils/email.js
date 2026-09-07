@@ -5,12 +5,13 @@ dotenv.config();
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
-    pool: true,
-    maxConnections: 5,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-    }
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 5000,    // 5 seconds
+    socketTimeout: 10000      // 10 seconds
 });
 
 const sendBookingEmail = async (userEmail, userName, eventTitle) => {
