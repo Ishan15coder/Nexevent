@@ -32,7 +32,9 @@ exports.registerUser = async (req, res) => {
             action: 'account_verification'
         });
 
-        await sendOTPEmail(email, otp, 'account_verification');
+        sendOTPEmail(email, otp, 'account_verification').catch(err => {
+            console.error('Background OTP email error:', err.message);
+        });
 
         res.status(201).json({
             message: 'OTP sent successfully. Please check your email for the OTP to verify your account.',
@@ -70,7 +72,9 @@ exports.loginUser = async (req, res) => {
             otp,
             action: 'account_verification'
         });
-        await sendOTPEmail(email, otp, 'account_verification');
+        sendOTPEmail(email, otp, 'account_verification').catch(err => {
+            console.error('Background OTP email error:', err.message);
+        });
 
         return res.status(400).json({
             error: 'Account not verified. Please check your email for the OTP to verify your account.',
@@ -155,7 +159,9 @@ exports.resendOtp = async (req, res) => {
             action: 'account_verification'
         });
 
-        await sendOTPEmail(email, otp, 'account_verification');
+        sendOTPEmail(email, otp, 'account_verification').catch(err => {
+            console.error('Background OTP email error:', err.message);
+        });
 
         res.json({ message: 'A new OTP has been sent to your email. Please check your inbox and spam folder.' });
     } catch (error) {
