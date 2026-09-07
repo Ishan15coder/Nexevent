@@ -1,6 +1,3 @@
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
-
 const express= require('express');
 const dotenv= require('dotenv');
 const cors= require('cors');
@@ -21,16 +18,13 @@ app.use('/api/bookings',bookingsRoutes);
 
 // Health check — used by cron job to keep Render from sleeping
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
-mongoose. connect(process.env.MONGODB_URI)
-
+mongoose.connect(process.env.MONGODB_URI)
 .then(() => {
-console.log('Connected to MongoDB');
+    console.log('Connected to MongoDB');
 })
 .catch((error) => {
-console.error('Error connecting to MongoDB:', error);
+    console.error('Error connecting to MongoDB:', error);
 })
-
-
 
 const PORT= process.env.PORT||5000;
 app.listen(PORT, ()=>{
