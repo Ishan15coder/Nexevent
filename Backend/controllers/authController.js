@@ -111,3 +111,27 @@ exports.verifyOtp = async (req, res) => {
         token: generateToken(user._id, user.role)
     });
 }
+
+exports.resendOtp = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        if (user.isVerified) {
+            return res.status(400).json({ error: 'Account is already verified' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        console.log(`Resent OTP for ${email}: ${otp}`);
+
+        await OTP.deleteMany({ email, action: 'account_verification' });
+        await OTP.create({ email, otp, action: 'account_verification' });
+        await sendOTPEmail(email, otp, 'account_verification');
+
+        res.json({ message: 'A new OTP has been sent to your email. Please check your inbox and spam folder.' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to send OTP email: ' + error.message });
+    }
+}

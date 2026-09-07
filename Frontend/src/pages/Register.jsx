@@ -5,15 +5,17 @@ import { FaEnvelope, FaLock, FaUser, FaEye, FaEyeSlash, FaArrowRight, FaShieldAl
 
 /* ── OTP Verification Step ────────────────────────────────────── */
 const OtpStep = ({ email, onBack }) => {
-    const { verifyOtp } = useContext(AuthContext);
+    const { verifyOtp, resendOtp } = useContext(AuthContext);
     const navigate = useNavigate();
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
+    const [resendMsg, setResendMsg] = useState('');
     const [loading, setLoading] = useState(false);
+    const [resending, setResending] = useState(false);
     const [done, setDone] = useState(false);
 
     const handleSubmit = async (e) => {
-        e.preventDefault(); setError(''); setLoading(true);
+        e.preventDefault(); setError(''); setResendMsg(''); setLoading(true);
         try {
             await verifyOtp(email, otp);
             setDone(true);
@@ -21,6 +23,16 @@ const OtpStep = ({ email, onBack }) => {
         } catch (err) {
             setError(err.response?.data?.error || 'Invalid OTP code.');
         } finally { setLoading(false); }
+    };
+
+    const handleResend = async () => {
+        setError(''); setResendMsg(''); setResending(true);
+        try {
+            const data = await resendOtp(email);
+            setResendMsg(data.message || 'OTP resent! Please check your inbox and Spam folder.');
+        } catch (err) {
+            setError(err.response?.data?.error || 'Failed to resend OTP.');
+        } finally { setResending(false); }
     };
 
     return (
@@ -31,6 +43,9 @@ const OtpStep = ({ email, onBack }) => {
                 </div>
                 <h2 className="heading-sm" style={{ marginBottom: '4px' }}>Verify Email OTP</h2>
                 <p className="muted" style={{ fontSize: '0.8125rem' }}>We sent a 6-digit code to <strong style={{ color: '#F0FDFA' }}>{email}</strong></p>
+                <p style={{ fontSize: '0.75rem', color: '#5EEAD4', marginTop: '6px', opacity: 0.9 }}>
+                    💡 Please check your <strong>Inbox</strong> & <strong>Spam / Junk folder</strong>.
+                </p>
             </div>
 
             {done ? (
@@ -51,10 +66,17 @@ const OtpStep = ({ email, onBack }) => {
                         />
                     </div>
                     {error && <p style={{ color: '#fca5a5', fontSize: '0.75rem', textAlign: 'center' }}>{error}</p>}
+                    {resendMsg && <p style={{ color: '#5EEAD4', fontSize: '0.75rem', textAlign: 'center' }}>{resendMsg}</p>}
                     <button type="submit" disabled={loading || otp.length < 6} className="btn btn-teal btn-lg" style={{ width: '100%' }}>
                         {loading ? 'Verifying...' : 'Verify & Continue'}
                     </button>
-                    <button type="button" onClick={onBack} className="btn btn-ghost btn-sm">← Back to Form</button>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                        <button type="button" onClick={onBack} className="btn btn-ghost btn-sm">← Back to Form</button>
+                        <button type="button" onClick={handleResend} disabled={resending} className="btn btn-ghost btn-sm" style={{ color: '#5EEAD4' }}>
+                            {resending ? 'Sending...' : 'Resend OTP'}
+                        </button>
+                    </div>
                 </form>
             )}
         </div>
