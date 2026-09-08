@@ -32,16 +32,20 @@ exports.registerUser = async (req, res) => {
             action: 'account_verification'
         });
 
-        await sendOTPEmail(email, otp, 'account_verification');
-
+        // Send response immediately (don't wait for email — prevents Render timeout)
         res.status(201).json({
             message: 'OTP sent successfully. Please check your email for the OTP to verify your account.',
             email
         });
 
+        // Send email in background — errors are logged for debugging
+        sendOTPEmail(email, otp, 'account_verification').catch(err => {
+            console.error(`CRITICAL: Failed to send OTP email to ${email}:`, err.message);
+        });
+
     } catch (error) {
-        console.error('Registration/OTP error:', error.message);
-        res.status(500).json({ error: 'Failed to send OTP. Please try again later.' });
+        console.error('Registration error:', error.message);
+        res.status(500).json({ error: 'Registration failed. Please try again later.' });
     }
 }
 
