@@ -32,9 +32,7 @@ exports.registerUser = async (req, res) => {
             action: 'account_verification'
         });
 
-        sendOTPEmail(email, otp, 'account_verification').catch(err => {
-            console.error('Background OTP email error:', err.message);
-        });
+        await sendOTPEmail(email, otp, 'account_verification');
 
         res.status(201).json({
             message: 'OTP sent successfully. Please check your email for the OTP to verify your account.',
@@ -42,7 +40,8 @@ exports.registerUser = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        console.error('Registration/OTP error:', error.message);
+        res.status(500).json({ error: 'Failed to send OTP. Please try again later.' });
     }
 }
 
